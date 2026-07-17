@@ -1,0 +1,64 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  # Two-step by design. A push to main only opens (or updates) a release PR;
+  # merging that PR is what tags the release. Nothing ships by surprise.
+  release-please:
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+    steps:
+      - uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+  # Packagist has no publish step: it mirrors the repository and picks up new
+  # versions from git tags via its GitHub webhook. This job only confirms the
+  # tagged commit is actually installable, so a broken tag is caught here rather
+  # than by the first person to composer require it.
+  verify-release:
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.release-please.outputs.tag_name }}
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: curl, json, mbstring
+          coverage: none
+
+      - uses: ramsey/composer-install@v3
+
+      - run: composer validate --strict
+      - run: vendor/bin/phpunit
+      - run: vendor/bin/phpstan analyse --no-progress
+
+      - name: The tagged version must match the shipped constant
+        run: |
+          TAG="${{ needs.release-please.outputs.tag_name }}"
+          EXPECTED="${TAG#v}"
+          ACTUAL=$(php -r 'require "vendor/autoload.php"; echo Nateq\Sdk\Nateq::VERSION;')
+          if [ "$EXPECTED" != "$ACTUAL" ]; then
+            echo "::error::Tag $TAG implies version $EXPECTED but Nateq::VERSION is $ACTUAL"
+            exit 1
+          fi
+          echo "ok: $TAG matches Nateq::VERSION=$ACTUAL"

@@ -1,0 +1,103 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: PHP ${{ matrix.php }} (${{ matrix.dependencies }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 8.2 is the floor: orchestra/testbench requires it, and PHP 8.1 left
+        # security support in December 2025.
+        php: ['8.2', '8.3', '8.4']
+        dependencies: [highest]
+        include:
+          - php: '8.2'
+            dependencies: lowest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: curl, json, mbstring
+          coverage: none
+
+      - uses: ramsey/composer-install@v3
+        with:
+          dependency-versions: ${{ matrix.dependencies }}
+
+      - name: Tests
+        run: vendor/bin/phpunit
+
+  static-analysis:
+    name: Static analysis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: curl, json, mbstring
+          coverage: none
+
+      - uses: ramsey/composer-install@v3
+
+      - run: vendor/bin/phpstan analyse --no-progress
+
+  code-style:
+    name: Code style
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: curl, json, mbstring
+          coverage: none
+
+      - uses: ramsey/composer-install@v3
+
+      - run: vendor/bin/php-cs-fixer fix --dry-run --diff
+
+  validate:
+    name: Validate composer.json
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+
+      - run: composer validate --strict
+
+      # A consumer installs the package without dev tooling. If src/ ever reaches
+      # for something only a dev dependency provides, this is where it surfaces.
+      - name: Install as a consumer would
+        run: composer install --no-dev --no-interaction
+
+      - name: The client must construct with runtime dependencies only
+        run: |
+          php -r '
+            require "vendor/autoload.php";
+            $c = new Nateq\Sdk\Nateq(apiKey: "tg_live_" . str_repeat("a", 48));
+            if (!$c->emails() instanceof Nateq\Sdk\Resources\Emails) { exit(1); }
+            echo "ok: constructed without dev dependencies\n";
+          '
