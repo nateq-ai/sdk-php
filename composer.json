@@ -1,0 +1,57 @@
+{
+    "name": "nateq/sdk",
+    "description": "Official PHP SDK for the Nateq API, with first-class Laravel support",
+    "keywords": ["nateq", "email", "sdk", "api", "laravel"],
+    "homepage": "https://github.com/nateq-ai/sdk-php",
+    "license": "MIT",
+    "support": {
+        "issues": "https://github.com/nateq-ai/sdk-php/issues",
+        "source": "https://github.com/nateq-ai/sdk-php"
+    },
+    "require": {
+        "php": "^8.2",
+        "ext-curl": "*",
+        "ext-json": "*"
+    },
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.64",
+        "orchestra/testbench": "^10.0",
+        "phpstan/phpstan": "^2.0",
+        "phpunit/phpunit": "^11.0"
+    },
+    "suggest": {
+        "illuminate/support": "Required to use the Laravel service provider and Nateq facade (^11.0 || ^12.0)"
+    },
+    "autoload": {
+        "psr-4": {
+            "Nateq\\Sdk\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Nateq\\Sdk\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Nateq\\Sdk\\Laravel\\NateqServiceProvider"
+            ],
+            "aliases": {
+                "Nateq": "Nateq\\Sdk\\Laravel\\Facades\\Nateq"
+            }
+        }
+    },
+    "scripts": {
+        "test": "phpunit",
+        "stan": "phpstan analyse",
+        "fmt": "php-cs-fixer fix",
+        "fmt:check": "php-cs-fixer fix --dry-run --diff",
+        "check": ["@fmt:check", "@stan", "@test"]
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
