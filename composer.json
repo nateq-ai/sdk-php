@@ -2,7 +2,7 @@
     "name": "nateq/sdk",
     "description": "Official PHP SDK for the Nateq API, with first-class Laravel support",
     "keywords": ["nateq", "email", "sdk", "api", "laravel"],
-    "homepage": "https://github.com/nateq-ai/sdk-php",
+    "homepage": "https://developers.nateq.io/sdks/php",
     "license": "MIT",
     "support": {
         "issues": "https://github.com/nateq-ai/sdk-php/issues",
