@@ -1,7 +1,13 @@
 {
     "name": "nateq/sdk",
     "description": "Official PHP SDK for the Nateq API, with first-class Laravel support",
-    "keywords": ["nateq", "email", "sdk", "api", "laravel"],
+    "keywords": [
+        "nateq",
+        "email",
+        "sdk",
+        "api",
+        "laravel"
+    ],
     "homepage": "https://developers.nateq.io/sdks/php",
     "license": "MIT",
     "support": {
@@ -47,7 +53,11 @@
         "stan": "phpstan analyse",
         "fmt": "php-cs-fixer fix",
         "fmt:check": "php-cs-fixer fix --dry-run --diff",
-        "check": ["@fmt:check", "@stan", "@test"]
+        "check": [
+            "@fmt:check",
+            "@stan",
+            "@test"
+        ]
     },
     "config": {
         "sort-packages": true

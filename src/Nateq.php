@@ -40,7 +40,7 @@ final class Nateq implements JsonSerializable
      * Reported in the User-Agent. Bumped automatically on release — the trailing
      * annotation is what release-please keys on, so don't remove it.
      */
-    public const VERSION = '0.1.0'; // x-release-please-version
+    public const VERSION = '0.1.1'; // x-release-please-version
 
     public const DEFAULT_BASE_URL = 'https://api.nateq.io/api/v1';
 
